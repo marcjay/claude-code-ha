@@ -629,7 +629,22 @@ start_ssh() {
     fi
 
     mkdir -p /etc/ssh /root/.ssh
-    ssh-keygen -A >/dev/null 2>&1 || true
+
+    # Persist SSH host keys in /data so they survive rebuilds/restarts. Without
+    # this, ssh-keygen -A mints fresh keys every boot and clients reject the
+    # "changed" host key on each rebuild.
+    local hostkey_store="/data/ssh"
+    mkdir -p "$hostkey_store"
+    if ls "$hostkey_store"/ssh_host_*_key >/dev/null 2>&1; then
+        cp -p "$hostkey_store"/ssh_host_* /etc/ssh/
+        bashio::log.info "Restored persistent SSH host keys from $hostkey_store"
+    else
+        ssh-keygen -A >/dev/null 2>&1 || true
+        cp -p /etc/ssh/ssh_host_* "$hostkey_store"/ 2>/dev/null || true
+        bashio::log.info "Generated SSH host keys and persisted them to $hostkey_store"
+    fi
+    chmod 600 /etc/ssh/ssh_host_*_key 2>/dev/null || true
+    chmod 644 /etc/ssh/ssh_host_*_key.pub 2>/dev/null || true
     echo "root:${pw}" | chpasswd
     sed -i 's/^#\?PermitRootLogin.*/PermitRootLogin yes/' /etc/ssh/sshd_config
     sed -i 's/^#\?PasswordAuthentication.*/PasswordAuthentication yes/' /etc/ssh/sshd_config

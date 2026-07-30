@@ -1,5 +1,11 @@
 # Changelog
 
+## 2.1.0
+
+First versioned release of the Claude Agent layer (SSH, Telegram, Remote Control, HA-MCP, Bun) so Home Assistant surfaces it as a normal Update.
+
+- Persist SSH host keys in `/data/ssh` so they survive rebuilds/restarts — no more "host key changed" warnings on every rebuild.
+
 ## Claude Agent: bundle Bun for Telegram channel
 
 - Bundle [Bun](https://bun.sh) in the image so the Claude Code Telegram channel plugin actually runs (the channel plugins are Bun scripts; the image previously shipped only Node). amd64 uses Bun's **baseline** musl build so it runs on host CPUs without AVX2; aarch64 uses the musl build; 32-bit ARM skips Bun (no builds — channels unsupported there).
