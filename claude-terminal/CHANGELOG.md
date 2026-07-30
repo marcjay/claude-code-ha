@@ -5,6 +5,7 @@
 First versioned release of the Claude Agent layer (SSH, Telegram, Remote Control, HA-MCP, Bun) so Home Assistant surfaces it as a normal Update.
 
 - Persist SSH host keys in `/data/ssh` so they survive rebuilds/restarts — no more "host key changed" warnings on every rebuild.
+- Add `ssh_authorized_keys` option for passwordless public-key login (re-applied each boot, so it survives rebuilds). When only keys are set (no `ssh_password`), SSH runs key-only (`PermitRootLogin prohibit-password`, password auth off).
 
 ## Claude Agent: bundle Bun for Telegram channel
 

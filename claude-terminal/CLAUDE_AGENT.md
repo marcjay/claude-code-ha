@@ -99,6 +99,8 @@ Logins land in the add-on's environment (native `claude` on `PATH`,
 persistent packages), so `tmux attach -t claude` drops you straight into the
 live session.
 
+**Passwordless login:** put your public key(s) in the `ssh_authorized_keys` option (e.g. the contents of `~/.ssh/id_ed25519.pub`) and you can SSH with no password. Set *only* keys and leave `ssh_password` empty for key-only access (password login is then disabled). Keys are re-applied on every boot, so they survive rebuilds.
+
 > Password root login on the LAN — enable it deliberately. Prefer `/rc` or the
 > web terminal if you don't specifically need SSH.
 

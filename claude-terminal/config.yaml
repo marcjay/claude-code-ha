@@ -45,6 +45,7 @@ options:
   ha_mcp_url: ""
   enable_ssh: false
   ssh_password: ""
+  ssh_authorized_keys: []
   enable_telegram: false
   telegram_bot_token: ""
 
@@ -63,6 +64,8 @@ schema:
   ha_mcp_url: str?
   enable_ssh: bool?
   ssh_password: password?
+  ssh_authorized_keys:
+    - str?
   enable_telegram: bool?
   telegram_bot_token: password?
 
