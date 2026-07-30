@@ -8,6 +8,8 @@ An enhanced, web-based terminal with Claude Code CLI and persistent package mana
 
 > **Fork Attribution:** This is an enhanced fork of [heytcass/home-assistant-addons](https://github.com/heytcass/home-assistant-addons) by Tom Cassady, maintained by Javier Santos ([@esjavadex](https://github.com/esjavadex)).
 
+> **Claude Agent fork:** This branch adds a 24/7 agent layer — SSH, Remote Control (`/rc`), a Telegram channel, and Home Assistant MCP registration — on top of the base add-on. See **[CLAUDE_AGENT.md](CLAUDE_AGENT.md)** for the added options and how to reach the session.
+
 ## What is Claude Terminal Pro?
 
 This add-on provides a web-based terminal interface with Claude Code CLI pre-installed plus persistent package management, allowing you to use Claude's powerful AI capabilities directly from your Home Assistant dashboard. It gives you direct access to Anthropic's Claude AI assistant through a terminal, ideal for:

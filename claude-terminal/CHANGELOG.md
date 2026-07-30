@@ -1,5 +1,18 @@
 # Changelog
 
+## Claude Agent layer (unreleased)
+
+Adds an always-on agent layer on top of the base add-on (slug renamed to
+`claude_agent`). The base terminal/persistence behaviour is unchanged. See
+[CLAUDE_AGENT.md](CLAUDE_AGENT.md).
+
+- Connect to the [HA-MCP integration](https://github.com/homeassistant-ai/ha-mcp-integration) via new `enable_ha_mcp` / `ha_mcp_url` options (registered at user scope with `claude mcp add --transport http`).
+- Optional SSH server (`enable_ssh` / `ssh_password`) so the persistent tmux session is reachable outside the HA UI.
+- Optional Telegram channel (`enable_telegram` / `telegram_bot_token`) using Claude Code's Channels research preview.
+- `claude_extra_args` to append flags to every `claude` launch.
+- Remote Control (`/rc`) works with the existing subscription login — no extra config.
+
+
 ## 2.0.13
 
 ### Bug fixes

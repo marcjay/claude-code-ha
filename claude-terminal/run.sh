@@ -405,12 +405,16 @@ get_claude_launch_command() {
         bashio::log.warning "Claude will run with --dangerously-skip-permissions (unrestricted file access)"
     fi
 
+    # Layered on top of the base add-on: attach the Telegram channel (if
+    # enabled) and any user-provided extra CLI args to every claude launch.
+    claude_flags="${claude_flags} ${CLAUDE_CHANNELS_ARG:-} $(bashio::config 'claude_extra_args' '')"
+
     if [ "$auto_launch_claude" = "true" ]; then
         # Auto-launch Claude first, then fall back to session picker on exit
         if [ -f /usr/local/bin/claude-session-picker ]; then
-            echo "clear && echo 'Welcome to Claude Terminal!' && echo '' && echo 'Starting Claude...' && sleep 1 && claude ${claude_flags}; /usr/local/bin/claude-session-picker"
+            echo "clear && echo 'Welcome to Claude Agent!' && echo '' && echo 'Starting Claude...' && sleep 1 && claude ${claude_flags}; /usr/local/bin/claude-session-picker"
         else
-            echo "clear && echo 'Welcome to Claude Terminal!' && echo '' && echo 'Starting Claude...' && sleep 1 && claude ${claude_flags}"
+            echo "clear && echo 'Welcome to Claude Agent!' && echo '' && echo 'Starting Claude...' && sleep 1 && claude ${claude_flags}"
         fi
     else
         # Show interactive session picker (has its own while-true loop)
@@ -418,7 +422,7 @@ get_claude_launch_command() {
             echo "clear && /usr/local/bin/claude-session-picker"
         else
             bashio::log.warning "Session picker not found, falling back to auto-launch"
-            echo "clear && echo 'Welcome to Claude Terminal!' && echo '' && echo 'Starting Claude...' && sleep 1 && claude"
+            echo "clear && echo 'Welcome to Claude Agent!' && echo '' && echo 'Starting Claude...' && sleep 1 && claude ${claude_flags}"
         fi
     fi
 }
@@ -534,6 +538,100 @@ run_health_check() {
     fi
 }
 
+# Register the Home Assistant MCP server so Claude can control HA.
+# Uses the remote streamable-HTTP endpoint exposed by the ha-mcp-integration
+# custom component (Settings -> Devices & Services -> HA-MCP -> Configure).
+setup_ha_mcp() {
+    if [ "$(bashio::config 'enable_ha_mcp' 'true')" != "true" ]; then
+        bashio::log.info "Home Assistant MCP: disabled"
+        return 0
+    fi
+
+    local url
+    url=$(bashio::config 'ha_mcp_url' '')
+    if [ -z "$url" ] || [ "$url" = "null" ]; then
+        bashio::log.warning "enable_ha_mcp is on but ha_mcp_url is empty."
+        bashio::log.warning "  Install the HA-MCP integration (HACS), then paste its connect"
+        bashio::log.warning "  URL into the ha_mcp_url option. Skipping MCP registration for now."
+        return 0
+    fi
+
+    bashio::log.info "Registering Home Assistant MCP server (streamable HTTP)..."
+    # Re-register idempotently at user scope so it persists across restarts (/data).
+    claude mcp remove ha-home-assistant --scope user >/dev/null 2>&1 || true
+    if claude mcp add --transport http --scope user ha-home-assistant "$url" >/dev/null 2>&1; then
+        bashio::log.info "  - HA MCP registered as 'ha-home-assistant'"
+    else
+        bashio::log.warning "  - Failed to register HA MCP (check ha_mcp_url is reachable)"
+    fi
+}
+
+# Enable the Telegram "channel" (Claude Code research-preview feature) so the
+# running session can be driven from Telegram. Needs a bot token from @BotFather.
+# Plugin/flag names are preview and may change upstream.
+setup_telegram() {
+    export CLAUDE_CHANNELS_ARG=""
+    if [ "$(bashio::config 'enable_telegram' 'false')" != "true" ]; then
+        bashio::log.info "Telegram channel: disabled"
+        return 0
+    fi
+
+    local token
+    token=$(bashio::config 'telegram_bot_token' '')
+    if [ -z "$token" ] || [ "$token" = "null" ]; then
+        bashio::log.warning "enable_telegram is on but telegram_bot_token is empty; skipping."
+        return 0
+    fi
+
+    local ch_dir="${HOME}/.claude/channels/telegram"
+    mkdir -p "$ch_dir"
+    printf 'TELEGRAM_BOT_TOKEN=%s\n' "$token" > "$ch_dir/.env"
+    chmod 600 "$ch_dir/.env"
+    export TELEGRAM_BOT_TOKEN="$token"
+
+    # Best-effort plugin install (idempotent). If it can't install non-interactively,
+    # run once from the terminal: /plugin install telegram@claude-plugins-official
+    claude plugin install telegram@claude-plugins-official >/dev/null 2>&1 || true
+
+    export CLAUDE_CHANNELS_ARG="--channels plugin:telegram@claude-plugins-official"
+    bashio::log.info "Telegram channel enabled (bot token configured)."
+}
+
+# Optional SSH server so you can reach the persistent tmux session from any
+# terminal:  ssh root@<ha-ip> -p <mapped-port>  then  tmux attach -t claude
+start_ssh() {
+    if [ "$(bashio::config 'enable_ssh' 'false')" != "true" ]; then
+        bashio::log.info "SSH server: disabled"
+        return 0
+    fi
+
+    local pw
+    pw=$(bashio::config 'ssh_password' '')
+    if [ -z "$pw" ] || [ "$pw" = "null" ]; then
+        bashio::log.warning "enable_ssh is on but ssh_password is empty; not starting SSH."
+        return 0
+    fi
+
+    if ! command -v sshd >/dev/null 2>&1; then
+        bashio::log.info "Installing openssh..."
+        apk add --no-cache openssh >/dev/null 2>&1 || bashio::log.warning "Failed to install openssh"
+    fi
+
+    mkdir -p /etc/ssh /root/.ssh
+    ssh-keygen -A >/dev/null 2>&1 || true
+    echo "root:${pw}" | chpasswd
+    sed -i 's/^#\?PermitRootLogin.*/PermitRootLogin yes/' /etc/ssh/sshd_config
+    sed -i 's/^#\?PasswordAuthentication.*/PasswordAuthentication yes/' /etc/ssh/sshd_config
+    # Give SSH logins the same PATH/HOME as the add-on (native claude, persistent pkgs).
+    grep -q persistent-packages /root/.profile 2>/dev/null || \
+        echo '. /etc/profile.d/persistent-packages.sh 2>/dev/null' >> /root/.profile
+    if /usr/sbin/sshd; then
+        bashio::log.info "SSH server started on container port 22 (map to a host port, e.g. 2222)."
+    else
+        bashio::log.warning "Failed to start sshd."
+    fi
+}
+
 # Main execution
 main() {
     bashio::log.info "Initializing Claude Terminal add-on..."
@@ -547,6 +645,9 @@ main() {
     setup_persistent_claude
     setup_session_picker
     setup_persistent_packages
+    setup_ha_mcp
+    setup_telegram
+    start_ssh
     start_web_terminal
 }
 
