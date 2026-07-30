@@ -616,10 +616,11 @@ start_ssh() {
         return 0
     fi
 
-    local pw
+    local pw keys
     pw=$(bashio::config 'ssh_password' '')
-    if [ -z "$pw" ] || [ "$pw" = "null" ]; then
-        bashio::log.warning "enable_ssh is on but ssh_password is empty; not starting SSH."
+    keys="$(normalize_config_list "$(bashio::config 'ssh_authorized_keys' '')")"
+    if { [ -z "$pw" ] || [ "$pw" = "null" ]; } && [ -z "$keys" ]; then
+        bashio::log.warning "enable_ssh is on but neither ssh_password nor ssh_authorized_keys is set; not starting SSH."
         return 0
     fi
 
@@ -645,9 +646,27 @@ start_ssh() {
     fi
     chmod 600 /etc/ssh/ssh_host_*_key 2>/dev/null || true
     chmod 644 /etc/ssh/ssh_host_*_key.pub 2>/dev/null || true
-    echo "root:${pw}" | chpasswd
-    sed -i 's/^#\?PermitRootLogin.*/PermitRootLogin yes/' /etc/ssh/sshd_config
-    sed -i 's/^#\?PasswordAuthentication.*/PasswordAuthentication yes/' /etc/ssh/sshd_config
+    # Public-key auth: install configured authorized keys so you can log in
+    # without a password. Driven from the add-on option (re-applied every boot),
+    # so it survives rebuilds even though /root is ephemeral.
+    if [ -n "$keys" ]; then
+        printf '%s\n' "$keys" > /root/.ssh/authorized_keys
+        chmod 700 /root/.ssh
+        chmod 600 /root/.ssh/authorized_keys
+        bashio::log.info "Installed SSH authorized key(s) for passwordless login."
+    fi
+
+    # Password auth only when a password is set; otherwise key-only, so there is
+    # never a blank-password root login.
+    local pwauth rootlogin
+    if [ -n "$pw" ] && [ "$pw" != "null" ]; then
+        echo "root:${pw}" | chpasswd
+        pwauth="yes"; rootlogin="yes"
+    else
+        pwauth="no"; rootlogin="prohibit-password"
+    fi
+    sed -i "s/^#\?PermitRootLogin.*/PermitRootLogin ${rootlogin}/" /etc/ssh/sshd_config
+    sed -i "s/^#\?PasswordAuthentication.*/PasswordAuthentication ${pwauth}/" /etc/ssh/sshd_config
     # Give SSH logins the same PATH/HOME as the add-on (native claude, persistent pkgs).
     grep -q persistent-packages /root/.profile 2>/dev/null || \
         echo '. /etc/profile.d/persistent-packages.sh 2>/dev/null' >> /root/.profile
