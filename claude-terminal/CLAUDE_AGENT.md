@@ -92,7 +92,7 @@ restart the add-on.
 
 ## SSH
 
-`enable_ssh: true` + a non-empty `ssh_password` starts `sshd` (installed
+SSH host keys are persisted to `/data/ssh`, so they stay stable across rebuilds (no repeated "host key changed" prompts). `enable_ssh: true` + a non-empty `ssh_password` starts `sshd` (installed
 on demand) for `root`. Map container port 22 to a free host port in the add-on
 **Network** panel (e.g. `2222` — the official SSH add-on already uses 22).
 Logins land in the add-on's environment (native `claude` on `PATH`,
