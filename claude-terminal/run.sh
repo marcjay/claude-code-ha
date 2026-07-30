@@ -589,12 +589,23 @@ setup_telegram() {
     chmod 600 "$ch_dir/.env"
     export TELEGRAM_BOT_TOKEN="$token"
 
-    # Best-effort plugin install (idempotent). If it can't install non-interactively,
-    # run once from the terminal: /plugin install telegram@claude-plugins-official
+    # The channel plugins are Bun scripts; Bun is baked into the image on
+    # amd64/aarch64 (see Dockerfile). Warn loudly if it is missing (e.g. armv7).
+    if ! command -v bun >/dev/null 2>&1; then
+        bashio::log.warning "Bun not found — the Telegram channel plugin needs Bun and will not run on this architecture."
+    fi
+
+    # Best-effort marketplace + plugin install (idempotent). If these cannot run
+    # non-interactively, do it once from the terminal:
+    #   /plugin marketplace add anthropics/claude-plugins-official
+    #   /plugin install telegram@claude-plugins-official   (then /reload-plugins)
+    claude plugin marketplace add anthropics/claude-plugins-official >/dev/null 2>&1 || true
     claude plugin install telegram@claude-plugins-official >/dev/null 2>&1 || true
 
     export CLAUDE_CHANNELS_ARG="--channels plugin:telegram@claude-plugins-official"
     bashio::log.info "Telegram channel enabled (bot token configured)."
+    bashio::log.info "  Lock it down after first start: DM the bot, then in the session run"
+    bashio::log.info "    /telegram:access pair <code>  then  /telegram:access policy allowlist"
 }
 
 # Optional SSH server so you can reach the persistent tmux session from any
