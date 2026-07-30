@@ -64,6 +64,32 @@ If the non-interactive plugin install fails, run it once from the web terminal:
 
 then restart the add-on.
 
+### Requirements & locking it down
+
+The channel plugins are [Bun](https://bun.sh) scripts, so **Bun is baked into
+the image** (amd64 uses the *baseline* build so it runs on CPUs without AVX2;
+arm64 uses the musl build; 32-bit ARM has no Bun and can't use channels).
+
+By default **anyone who messages the bot gets a pairing code** — you must switch
+to an allowlist. After the add-on's first start with Telegram enabled, DM the
+bot, then in the Claude session run:
+
+```
+/telegram:access pair <code>          # code the bot replied with — adds your user ID
+/telegram:access policy allowlist      # now only you can send; everyone else dropped
+```
+
+The allowlist gates *who can approve tool-use prompts* too, so keep it to
+yourself — especially before enabling `--permission-mode`/skip-permissions. If
+the `/telegram:*` commands are missing, the plugin didn't load; run
+`/plugin marketplace add anthropics/claude-plugins-official`,
+`/plugin install telegram@claude-plugins-official`, `/reload-plugins`, then
+restart the add-on.
+
+> **iMessage / Discord:** iMessage's plugin needs macOS (it reads the Messages
+> DB and drives AppleScript), so it cannot run in this Linux add-on. Discord
+> works the same way as Telegram if you'd prefer it.
+
 ## SSH
 
 `enable_ssh: true` + a non-empty `ssh_password` starts `sshd` (installed

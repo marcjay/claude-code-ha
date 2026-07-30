@@ -20,7 +20,8 @@ RUN apk add --no-cache \
     git \
     vim \
     wget \
-    tree
+    tree \
+    unzip
 
 # Home Assistant Supervisor always passes BUILD_ARCH (amd64|aarch64|armv7|armhf|i386)
 # as a --build-arg. TARGETARCH/TARGETVARIANT are the automatic BuildKit values and
@@ -57,6 +58,28 @@ RUN ADDON_ARCH="${BUILD_ARCH}"; \
     fi; \
     printf '%s\n' "${ADDON_ARCH}" > /etc/addon-arch && \
     echo "Resolved add-on architecture: ${ADDON_ARCH} (BUILD_ARCH='${BUILD_ARCH}' TARGETARCH='${TARGETARCH}/${TARGETVARIANT}' uname='$(uname -m)')"
+
+# Install Bun — required by the Claude Code "channels" plugins (Telegram/Discord).
+# Bun ships no 32-bit ARM builds, so armv7/armhf skip it (those channels are
+# unsupported there). On amd64 we deliberately use the *baseline* build: the
+# default x64 build needs AVX2, which older HA host CPUs lack (SIGILL); baseline
+# runs on any x86-64. All variants are musl (Alpine).
+RUN ADDON_ARCH=$(cat /etc/addon-arch); \
+    case "${ADDON_ARCH}" in \
+        amd64)   BUN_PKG="bun-linux-x64-musl-baseline" ;; \
+        aarch64) BUN_PKG="bun-linux-aarch64-musl" ;; \
+        *)       BUN_PKG="" ;; \
+    esac; \
+    if [ -n "${BUN_PKG}" ]; then \
+        echo "Installing Bun (${BUN_PKG}) for channel plugins..."; \
+        curl -fsSL -o /tmp/bun.zip "https://github.com/oven-sh/bun/releases/latest/download/${BUN_PKG}.zip" \
+        && unzip -q /tmp/bun.zip -d /tmp/bun \
+        && install -m 0755 "/tmp/bun/${BUN_PKG}/bun" /usr/local/bin/bun \
+        && rm -rf /tmp/bun /tmp/bun.zip \
+        && bun --version; \
+    else \
+        echo "Bun unavailable for ${ADDON_ARCH}; Telegram/Discord channels unsupported on this arch"; \
+    fi
 
 # Install Claude Code CLI. Current native releases do not publish a 32-bit ARM
 # binary, so armv7/armhf use the final portable 1.x JavaScript release. Supported

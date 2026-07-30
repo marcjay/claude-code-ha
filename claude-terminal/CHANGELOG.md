@@ -1,5 +1,12 @@
 # Changelog
 
+## Claude Agent: bundle Bun for Telegram channel
+
+- Bundle [Bun](https://bun.sh) in the image so the Claude Code Telegram channel plugin actually runs (the channel plugins are Bun scripts; the image previously shipped only Node). amd64 uses Bun's **baseline** musl build so it runs on host CPUs without AVX2; aarch64 uses the musl build; 32-bit ARM skips Bun (no builds — channels unsupported there).
+- `setup_telegram` now also best-effort adds the `claude-plugins-official` marketplace before installing, warns if Bun is missing, and logs the allowlist lock-down commands.
+- Docs: Bun requirement + `/telegram:access ... policy allowlist` lock-down steps in CLAUDE_AGENT.md.
+
+
 ## Claude Agent layer (unreleased)
 
 Adds an always-on agent layer on top of the base add-on (slug renamed to
