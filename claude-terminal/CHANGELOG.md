@@ -1,5 +1,10 @@
 # Changelog
 
+## 2.2.0
+
+- Add `ssh_authorized_keys` option for passwordless public-key login (re-applied each boot, so it survives rebuilds). When only keys are set (no `ssh_password`), SSH runs key-only (`PermitRootLogin prohibit-password`, password auth off).
+
+
 ## 2.1.0
 
 First versioned release of the Claude Agent layer (SSH, Telegram, Remote Control, HA-MCP, Bun) so Home Assistant surfaces it as a normal Update.
