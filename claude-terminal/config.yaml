@@ -1,8 +1,8 @@
 ---
-name: "Claude Terminal Pro"
-description: "Enhanced terminal interface for Anthropic's Claude Code CLI with persistent auth, package management, and image paste support. Fork of heytcass/home-assistant-addons"
+name: "Claude Agent"
+description: "Runs Anthropic's Claude Code 24/7 with persistent login. Reach it via the web terminal, SSH, Remote Control (/rc) on the Claude mobile app, or a Telegram channel; connects to the Home Assistant MCP server."
 version: "2.0.13"
-slug: "claude_terminal_pro"
+slug: "claude_agent"
 init: false
 
 # Supported architectures
@@ -12,22 +12,24 @@ arch:
   - armv7
 
 # External resources
-url: "https://github.com/esjavadex/claude-code-ha"
+url: "https://github.com/marcjay/claude-code-ha"
 
 # Web interface configuration
 ingress: true
 ingress_port: 7680
-panel_icon: mdi:code-braces-box
-panel_title: "Claude Terminal Pro"
+panel_icon: mdi:robot-happy-outline
+panel_title: "Claude Agent"
 panel_admin: true
 
 # Port configuration
 ports:
   7680/tcp: 7680
   7681/tcp: 7681
+  22/tcp: null
 ports_description:
   7680/tcp: "Image upload service and web interface"
   7681/tcp: "ttyd terminal (embedded in web interface)"
+  22/tcp: "SSH access (only used when enable_ssh is true; map to a free host port, e.g. 2222)"
 
 # Add-on configuration options
 options:
@@ -38,6 +40,13 @@ options:
   persistent_pip_packages: []
   use_persistent_claude: false
   auto_update_claude_on_start: false
+  claude_extra_args: ""
+  enable_ha_mcp: true
+  ha_mcp_url: ""
+  enable_ssh: false
+  ssh_password: ""
+  enable_telegram: false
+  telegram_bot_token: ""
 
 schema:
   auto_launch_claude: bool?
@@ -49,10 +58,19 @@ schema:
     - str?
   use_persistent_claude: bool?
   auto_update_claude_on_start: bool?
+  claude_extra_args: str?
+  enable_ha_mcp: bool?
+  ha_mcp_url: str?
+  enable_ssh: bool?
+  ssh_password: password?
+  enable_telegram: bool?
+  telegram_bot_token: password?
 
 # Volume mappings for file access
 map:
-  - config:rw    # Access to Home Assistant configuration files
+  - config:rw            # Home Assistant configuration files
+  - all_addon_configs:rw # Other add-ons' config dirs (edit their YAML)
+  - share:rw             # /share (browse output over Samba)
 
 # API access for Home Assistant integration
 hassio_api: true
