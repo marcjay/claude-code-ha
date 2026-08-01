@@ -1,5 +1,9 @@
 # Changelog
 
+## 2.2.1
+
+- Add Esc and Shift+Tab buttons to the web UI toolbar, sending the corresponding key into the terminal (Shift+Tab switches Claude Code permission modes).
+
 ## 2.2.0
 
 - Add `ssh_authorized_keys` option for passwordless public-key login (re-applied each boot, so it survives rebuilds). When only keys are set (no `ssh_password`), SSH runs key-only (`PermitRootLogin prohibit-password`, password auth off).

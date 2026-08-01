@@ -283,6 +283,14 @@
                     <span>📎</span>
                     <span>Upload Image</span>
                 </button>
+                <button id="esc-btn" class="header-btn">
+                    <span>⎋</span>
+                    <span>Esc</span>
+                </button>
+                <button id="shift-tab-btn" class="header-btn">
+                    <span>⇧⇥</span>
+                    <span>Shift+Tab</span>
+                </button>
             </div>
         </div>
         <div id="terminal-container">
@@ -666,6 +674,34 @@
                 console.log('Cannot send keyboard events to iframe:', err);
                 // This is expected due to cross-origin restrictions
                 // The clipboard copy is the fallback
+            }
+        }
+
+        // Esc button - sends an Escape keypress into the terminal
+        const escBtn = document.getElementById('esc-btn');
+        escBtn.addEventListener('click', () => {
+            sendKeyToTerminal('Escape', 27);
+        });
+
+        const shiftTabBtn = document.getElementById('shift-tab-btn');
+        shiftTabBtn.addEventListener('click', () => {
+            sendKeyToTerminal('Tab', 9, { shiftKey: true });
+        });
+
+        function sendKeyToTerminal(key, keyCode, modifiers = {}) {
+            const iframe = document.getElementById('terminal-frame');
+            try {
+                iframe.contentWindow.focus();
+                const iframeDoc = iframe.contentWindow.document;
+                const target = iframeDoc.querySelector('.xterm-helper-textarea') || iframeDoc.activeElement || iframeDoc.body;
+                target.focus();
+
+                const eventInit = { key, code: key, keyCode, which: keyCode, bubbles: true, cancelable: true, ...modifiers };
+                target.dispatchEvent(new KeyboardEvent('keydown', eventInit));
+                target.dispatchEvent(new KeyboardEvent('keyup', eventInit));
+            } catch (err) {
+                console.error('Cannot send key to terminal iframe:', err);
+                setStatus('Could not reach terminal', 'error');
             }
         }
 
