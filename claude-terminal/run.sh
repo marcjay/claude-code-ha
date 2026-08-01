@@ -670,6 +670,17 @@ start_ssh() {
     # Give SSH logins the same PATH/HOME as the add-on (native claude, persistent pkgs).
     grep -q persistent-packages /root/.profile 2>/dev/null || \
         echo '. /etc/profile.d/persistent-packages.sh 2>/dev/null' >> /root/.profile
+
+    # Convenience script so SSH users can jump straight into the persistent
+    # tmux session. /root is ephemeral (wiped on container recreation), so
+    # this is regenerated on every boot rather than baked into the image.
+    cat > /root/attach.sh << 'ATTACH_EOF'
+#!/bin/bash
+exec tmux attach -t claude
+ATTACH_EOF
+    chmod +x /root/attach.sh
+    bashio::log.info "SSH attach helper installed: run /root/attach.sh to attach to the 'claude' tmux session."
+
     if /usr/sbin/sshd; then
         bashio::log.info "SSH server started on container port 22 (map to a host port, e.g. 2222)."
     else

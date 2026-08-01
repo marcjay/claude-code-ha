@@ -1,5 +1,9 @@
 # Changelog
 
+## 2.2.4
+
+- Install `/root/attach.sh` (regenerated each boot, since `/root` is ephemeral) so SSH users can attach to the persistent `claude` tmux session with a single command.
+
 ## 2.2.3
 
 - Redesign web UI toolbar for clarity: Voice Input and Upload Image stay as filled action buttons, while Esc and Shift+Tab become outlined "keycap" buttons with legible monospace labels (replacing the icon-only ⎋/⇧⇥ glyphs on narrow screens), separated by a divider. Larger tap targets, visible focus ring, and a press animation.
