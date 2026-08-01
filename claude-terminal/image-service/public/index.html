@@ -53,12 +53,10 @@
         }
 
         .header-btn {
-            background: #007acc;
-            color: white;
             border: none;
             padding: 0 12px;
-            height: 30px;
-            border-radius: 4px;
+            height: 34px;
+            border-radius: 6px;
             cursor: pointer;
             font-size: 12px;
             display: flex;
@@ -66,25 +64,70 @@
             gap: 6px;
             white-space: nowrap;
             flex-shrink: 0;
-        }
-
-        .header-btn:hover {
-            background: #005a9e;
+            transition: background 0.15s ease, border-color 0.15s ease, transform 0.08s ease;
         }
 
         .header-btn:active {
-            background: #004578;
+            transform: scale(0.95);
         }
 
-        .header-btn:disabled {
+        .header-btn:focus-visible {
+            outline: 2px solid #4daafc;
+            outline-offset: 2px;
+        }
+
+        .header-btn-action {
+            background: #007acc;
+            color: white;
+        }
+
+        .header-btn-action:hover {
+            background: #0091e6;
+        }
+
+        .header-btn-action:active {
+            background: #005a9e;
+        }
+
+        .header-btn-action:disabled {
             background: #555;
             cursor: not-allowed;
             opacity: 0.5;
+            transform: none;
         }
 
         #voice-btn.recording {
             background: #d9534f;
             animation: pulse 1.5s infinite;
+        }
+
+        .header-btn-key {
+            background: transparent;
+            border: 1px solid #4a4a4a;
+            color: #999;
+            font-family: 'SF Mono', 'Cascadia Code', Consolas, monospace;
+            font-size: 11px;
+            font-weight: 500;
+            letter-spacing: 0.02em;
+            padding: 0 10px;
+        }
+
+        .header-btn-key:hover {
+            background: #383838;
+            color: #fff;
+            border-color: #666;
+        }
+
+        .header-btn-key:active {
+            background: #444;
+        }
+
+        #header-divider {
+            width: 1px;
+            height: 18px;
+            background: #444;
+            flex-shrink: 0;
+            margin: 0 2px;
         }
 
         @keyframes pulse {
@@ -296,11 +339,11 @@
                 gap: 6px;
             }
 
-            .header-btn {
+            .header-btn-action {
                 padding: 0 10px;
             }
 
-            .header-btn .btn-label {
+            .header-btn-action .btn-label {
                 display: none;
             }
         }
@@ -312,22 +355,17 @@
             <div id="header-title">Claude Terminal Pro - Voice & image support</div>
             <div id="header-buttons">
                 <span id="status"></span>
-                <button id="voice-btn" class="header-btn">
-                    <span>🎤</span>
+                <button id="voice-btn" class="header-btn header-btn-action">
+                    <span aria-hidden="true">🎤</span>
                     <span class="btn-label">Voice Input</span>
                 </button>
-                <button id="upload-btn" class="header-btn">
-                    <span>📎</span>
+                <button id="upload-btn" class="header-btn header-btn-action">
+                    <span aria-hidden="true">📎</span>
                     <span class="btn-label">Upload Image</span>
                 </button>
-                <button id="esc-btn" class="header-btn">
-                    <span>⎋</span>
-                    <span class="btn-label">Esc</span>
-                </button>
-                <button id="shift-tab-btn" class="header-btn">
-                    <span>⇧⇥</span>
-                    <span class="btn-label">Shift+Tab</span>
-                </button>
+                <span id="header-divider" aria-hidden="true"></span>
+                <button id="esc-btn" class="header-btn header-btn-key" title="Send Escape key">Esc</button>
+                <button id="shift-tab-btn" class="header-btn header-btn-key" title="Send Shift+Tab">⇧Tab</button>
             </div>
         </div>
         <div id="terminal-container">

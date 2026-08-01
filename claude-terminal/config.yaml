@@ -1,7 +1,7 @@
 ---
 name: "Claude Agent"
 description: "Runs Anthropic's Claude Code 24/7 with persistent login. Reach it via the web terminal, SSH, Remote Control (/rc) on the Claude mobile app, or a Telegram channel; connects to the Home Assistant MCP server."
-version: "2.2.2"
+version: "2.2.3"
 slug: "claude_agent"
 init: false
 

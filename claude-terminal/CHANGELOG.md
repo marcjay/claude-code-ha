@@ -1,5 +1,9 @@
 # Changelog
 
+## 2.2.3
+
+- Redesign web UI toolbar for clarity: Voice Input and Upload Image stay as filled action buttons, while Esc and Shift+Tab become outlined "keycap" buttons with legible monospace labels (replacing the icon-only ⎋/⇧⇥ glyphs on narrow screens), separated by a divider. Larger tap targets, visible focus ring, and a press animation.
+
 ## 2.2.2
 
 - Fix web UI toolbar in portrait mode: hide the header title on narrow screens, give all header buttons a consistent height (Voice Input/Upload Image no longer wrap to two lines), and collapse button labels to icon-only so Voice, Upload, Esc, and Shift+Tab all fit.
