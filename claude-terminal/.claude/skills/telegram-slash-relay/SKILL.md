@@ -10,6 +10,8 @@ description: |
   or sentence that happens to start with "/". Do NOT use it for ordinary
   chat messages, and do not invent commands that don't exist — forward
   exactly what the sender typed and let the CLI itself decide if it's valid.
+  Refuse commands that open an interactive picker (/mcp, /agents, /model,
+  /resume, and similar) — see "Commands to refuse" below.
 ---
 
 # Telegram Slash-Command Relay
@@ -44,10 +46,39 @@ appears and stabilizes, and posts that output straight to the Telegram Bot
 API with `curl` — no MCP tool call needed for the follow-up, since by the
 time it fires there is no active assistant turn to make one from.
 
+## Commands to refuse
+
+Some slash commands (`/mcp`, `/agents`, `/model`, `/resume`, and similar)
+don't just print output — they open an interactive picker/selector that
+waits for arrow-key/Enter/Esc input. Relayed as plain text + Enter, the
+picker opens but is never dismissed, and this doesn't just leave the picker
+visually stuck: it wedges the CLI's entire input loop, so it stops
+processing *any* further Telegram messages — including any follow-up meant
+to unstick it. There is no remote recovery once this happens; a prior
+attempt at a remote Escape-relay was tried and confirmed not to work (while
+the picker owns the terminal, the CLI isn't in its turn loop at all, so it
+can't consume that relay trigger either) and was removed rather than kept
+as dead code. The only fix is a manual restart of the CLI process from the
+actual terminal.
+
+Before relaying, check the command name (the part up to the first space)
+against this known-picker list: `/mcp`, `/agents`, `/model`, `/resume`. If
+it matches, do **not** launch the relay script. Instead reply directly:
+
+> `/mcp` opens an interactive picker that can't be driven or dismissed
+> over Telegram — it would wedge this session with no remote recovery. Run
+> it from the actual terminal instead.
+
+If a command isn't on this list but you have reason to think it might open
+a picker too, err on the side of refusing and explaining rather than
+relaying speculatively — the failure mode is a full manual restart, not a
+harmless error message.
+
 ## How to use it
 
 When you receive a `<channel source="plugin:telegram:telegram" chat_id="..."
-message_id="...">` message whose text is a real slash command:
+message_id="...">` message whose text is a real slash command that is
+**not** on the refusal list above:
 
 1. Launch the relay script **in the background** (it must outlive this turn):
 
