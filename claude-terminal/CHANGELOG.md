@@ -1,5 +1,9 @@
 # Changelog
 
+## 2.2.2
+
+- Fix web UI toolbar in portrait mode: hide the header title on narrow screens, give all header buttons a consistent height (Voice Input/Upload Image no longer wrap to two lines), and collapse button labels to icon-only so Voice, Upload, Esc, and Shift+Tab all fit.
+
 ## 2.2.1
 
 - Add Esc and Shift+Tab buttons to the web UI toolbar, sending the corresponding key into the terminal (Shift+Tab switches Claude Code permission modes).

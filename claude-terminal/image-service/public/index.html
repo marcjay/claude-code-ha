@@ -33,25 +33,39 @@
             align-items: center;
             justify-content: space-between;
             flex-shrink: 0;
+            gap: 8px;
         }
 
         #header-title {
             font-size: 14px;
             font-weight: 500;
             color: #ccc;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        #header-buttons {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            flex-shrink: 0;
         }
 
         .header-btn {
             background: #007acc;
             color: white;
             border: none;
-            padding: 6px 12px;
+            padding: 0 12px;
+            height: 30px;
             border-radius: 4px;
             cursor: pointer;
             font-size: 12px;
             display: flex;
             align-items: center;
             gap: 6px;
+            white-space: nowrap;
+            flex-shrink: 0;
         }
 
         .header-btn:hover {
@@ -267,29 +281,52 @@
         #voice-status.listening {
             color: #d9534f;
         }
+
+        @media (max-width: 700px), (orientation: portrait) {
+            #header-title {
+                display: none;
+            }
+
+            #header {
+                justify-content: flex-start;
+                padding: 8px 10px;
+            }
+
+            #header-buttons {
+                gap: 6px;
+            }
+
+            .header-btn {
+                padding: 0 10px;
+            }
+
+            .header-btn .btn-label {
+                display: none;
+            }
+        }
     </style>
 </head>
 <body>
     <div id="container">
         <div id="header">
             <div id="header-title">Claude Terminal Pro - Voice & image support</div>
-            <div style="display: flex; align-items: center; gap: 12px;">
+            <div id="header-buttons">
                 <span id="status"></span>
                 <button id="voice-btn" class="header-btn">
                     <span>🎤</span>
-                    <span>Voice Input</span>
+                    <span class="btn-label">Voice Input</span>
                 </button>
                 <button id="upload-btn" class="header-btn">
                     <span>📎</span>
-                    <span>Upload Image</span>
+                    <span class="btn-label">Upload Image</span>
                 </button>
                 <button id="esc-btn" class="header-btn">
                     <span>⎋</span>
-                    <span>Esc</span>
+                    <span class="btn-label">Esc</span>
                 </button>
                 <button id="shift-tab-btn" class="header-btn">
                     <span>⇧⇥</span>
-                    <span>Shift+Tab</span>
+                    <span class="btn-label">Shift+Tab</span>
                 </button>
             </div>
         </div>
@@ -365,7 +402,7 @@
             const formData = new FormData();
             formData.append('image', file);
 
-            uploadBtn.innerHTML = '<span class="spinner"></span><span>Uploading...</span>';
+            uploadBtn.innerHTML = '<span class="spinner"></span><span class="btn-label">Uploading...</span>';
             uploadBtn.disabled = true;
 
             try {
@@ -469,7 +506,7 @@
                 console.error('Upload error:', error);
                 setStatus('Upload failed: ' + error.message, 'error');
             } finally {
-                uploadBtn.innerHTML = '<span>📎</span><span>Upload Image</span>';
+                uploadBtn.innerHTML = '<span>📎</span><span class="btn-label">Upload Image</span>';
                 uploadBtn.disabled = false;
             }
         }
