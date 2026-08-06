@@ -90,6 +90,50 @@ restart the add-on.
 > DB and drives AppleScript), so it cannot run in this Linux add-on. Discord
 > works the same way as Telegram if you'd prefer it.
 
+### Forcing Telegram replies (Stop hook)
+
+Claude can compose a good answer for an inbound Telegram message as plain
+assistant text and then simply forget to call the channel's `reply` tool — the
+text sits in the transcript and never reaches the chat. A `Stop` hook closes
+this gap: it runs every time Claude finishes a turn and blocks the turn from
+ending if the most recent inbound Telegram message was never followed by a
+`mcp__plugin_telegram_telegram__reply` tool call.
+
+The script ships at `.claude/hooks/telegram-reply-check.py` in this repo. It
+reads `transcript_path` off the hook's stdin JSON, scans the session's JSONL
+transcript for the last entry with `origin.kind == "channel"` and
+`origin.server == "plugin:telegram:telegram"`, and checks whether any
+assistant `tool_use` for the reply tool appears after it. If not — and the
+hook isn't already mid-retry (`stop_hook_active`, to avoid looping) — it
+prints `{"decision": "block", "reason": "..."}`, which forces Claude to
+actually send the reply before the turn can end.
+
+To wire it up, add this to `~/.claude/settings.json` (merge into the existing
+object — don't replace it):
+
+```json
+{
+  "hooks": {
+    "Stop": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "python3 ~/.claude/hooks/telegram-reply-check.py"
+          }
+        ]
+      }
+    ]
+  }
+}
+```
+
+and copy the script itself to `~/.claude/hooks/telegram-reply-check.py` (or
+point the `command` at wherever this repo is checked out — see the skill
+symlink pattern used for `telegram-slash-relay` above for a live-edit setup).
+No `matcher` is needed since `Stop` hooks aren't tool-scoped. Requires
+`python3` on `PATH`, which the add-on image already provides.
+
 ## SSH
 
 SSH host keys are persisted to `/data/ssh`, so they stay stable across rebuilds (no repeated "host key changed" prompts). `enable_ssh: true` + a non-empty `ssh_password` starts `sshd` (installed
