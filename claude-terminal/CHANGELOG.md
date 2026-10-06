@@ -1,5 +1,9 @@
 # Changelog
 
+## 2.2.5
+
+- Fix `use_persistent_claude`/`auto_update_claude_on_start` being silently ignored: `init_environment` puts `$HOME/.local/bin` (the build-time native binary) ahead of `/usr/local/bin` on `PATH`, so the persistent override's symlink there was never actually reached. `setup_persistent_claude` now also relinks `$HOME/.local/bin/claude` to the persistent binary once it's validated, so the updated version is the one that actually runs.
+
 ## 2.2.4
 
 - Install `/root/attach.sh` (regenerated each boot, since `/root` is ephemeral) so SSH users can attach to the persistent `claude` tmux session with a single command.

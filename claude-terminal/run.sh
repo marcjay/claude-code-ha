@@ -251,6 +251,10 @@ setup_persistent_claude() {
     local persistent_bin="$persistent_root/bin/claude"
     local persistent_package="$persistent_root/lib/node_modules/@anthropic-ai/claude-code/package.json"
     local claude_link="${CLAUDE_BIN_LINK:-/usr/local/bin/claude}"
+    # The native binary's symlink lives in $HOME/.local/bin, which init_environment
+    # puts ahead of /usr/local/bin on PATH. Overwrite it too, or "claude" keeps
+    # resolving to the stale build-time binary even after this override activates.
+    local native_bin_link="/data/home/.local/bin/claude"
     local claude_npm_spec="@anthropic-ai/claude-code@latest"
 
     use_persistent_claude=$(bashio::config 'use_persistent_claude' 'false')
@@ -291,7 +295,9 @@ setup_persistent_claude() {
        [ -f "$persistent_package" ] && \
        "${version_check[@]}" >/dev/null 2>&1; then
         ln -sf "$persistent_bin" "$claude_link"
+        ln -sf "$persistent_bin" "$native_bin_link"
         bashio::log.info "Persistent Claude override active: $claude_link -> $persistent_bin"
+        bashio::log.info "  - Also overrode $native_bin_link (earlier on PATH than $claude_link)"
     else
         bashio::log.warning "Persistent Claude override enabled but no working persistent Claude install found at $persistent_root"
         bashio::log.warning "Install it manually once with: NPM_CONFIG_PREFIX=/data/npm npm install -g $claude_npm_spec"
